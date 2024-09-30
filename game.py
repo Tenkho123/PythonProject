@@ -7,7 +7,7 @@ import numpy as np
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 #font = pygame.font.SysFont('arial', 25)
-#abc
+
 class Direction(Enum):
     RIGHT = 1
     LEFT = 2
