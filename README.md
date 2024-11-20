@@ -1,1 +1,1 @@
-Snake game AI using Deep Q Learning
+Machine learning using pygame and pytorch
