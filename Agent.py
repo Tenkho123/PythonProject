@@ -2,52 +2,54 @@ import torch
 import random
 import numpy as np
 from collections import deque
+from CarRacing import CarRacingEnv
 from Model import Linear_QNet, QTrainer
-from CarRacing import CarRacingGameAI  # Import your car game environment here
+from helper import plot
 
-# Hyperparameters
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
 class Agent:
+
     def __init__(self):
         self.n_games = 0
-        self.epsilon = 0  # Exploration rate
-        self.gamma = 0.9  # Discount rate
-        self.memory = deque(maxlen=MAX_MEMORY)  # Memory for experience replay
-        self.model = Linear_QNet(10, 256, 3)  # Input, hidden, output sizes
+        self.epsilon = 0  # randomness
+        self.gamma = 0.9  # discount rate
+        self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
+        self.model = Linear_QNet(5, 256, 4)  # assuming the state has 5 features and 4 possible actions
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
-        car_position = game.car_rect.center
-        velocity = game.velocity
-        obstacles = game.obstacles
-
+        # Assuming `game` gives us the car's position, speed, and distances to obstacles
+        car_x, car_y = game.car_rect.center  # get the car's x, y position
+        car_speed = game.car_speed  # get the car's speed
+        #distance_to_obstacle = game.get_distance_to_obstacle()  # assuming a distance measure
+        
+        distances = game.ray_casting()  # Call the ray_casting method to get the distances to obstacles
+        car_position = np.array([game.car_rect.centerx / 1000, game.car_rect.centery / 800])  # Normalize car position
+        distance_to_obstacle = np.concatenate([car_position, distances])  # Combine the normalized car position with the obstacle distances
+        
+        # state representation could be a vector with car position, speed, and obstacle distances
         state = [
-            # Car position and velocity
-            car_position[0], car_position[1],
-            velocity[0], velocity[1],
-            
-            # Obstacle positions (simplified for example)
-            obstacles[0][0], obstacles[0][1],  # First obstacle
-            obstacles[1][0], obstacles[1][1],  # Second obstacle
-
-            # Direction towards the goal
-            game.roads[0][0] - car_position[0],
-            game.roads[0][1] - car_position[1],
+            car_x,
+            car_y,
+            car_speed,
+            distance_to_obstacle,
+            game.is_on_road()  # whether the car is on the road (1) or off the road (0)
         ]
-        return np.array(state, dtype=float)
+        
+        return np.array(state, dtype=int)
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE)  # Random sampling
+            mini_sample = random.sample(self.memory, BATCH_SIZE)  # list of tuples
         else:
             mini_sample = self.memory
-        
+
         states, actions, rewards, next_states, dones = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, dones)
 
@@ -55,11 +57,11 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        self.epsilon = 80 - self.n_games  # Decrease exploration over time
-        final_move = [0, 0, 0]  # [straight, left, right]
-
+        # random moves: tradeoff exploration / exploitation
+        self.epsilon = 80 - self.n_games
+        final_move = [0, 0, 0, 0]  # 4 possible actions (move forward, move backward, turn left, turn right)
         if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 2)
+            move = random.randint(0, 3)
             final_move[move] = 1
         else:
             state0 = torch.tensor(state, dtype=torch.float)
@@ -69,24 +71,49 @@ class Agent:
 
         return final_move
 
+
 def train():
+    plot_scores = []
+    plot_mean_scores = []
+    total_score = 0
+    record = 0
     agent = Agent()
-    game = CarRacingGameAI()  # Replace with your car game environment
+    game = CarRacingEnv()  # assuming this is your new game environment
     while True:
+        # get old state
         state_old = agent.get_state(game)
+
+        # get move
         final_move = agent.get_action(state_old)
-        reward, done, score = game.play_step(final_move)
+
+        # perform move and get new state
+        reward, done, score = game.step(final_move)  # assuming step method in the new game
         state_new = agent.get_state(game)
 
+        # train short memory
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
+
+        # remember
         agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
-            game.reset()
+            # train long memory, plot result
+            game.reset()  # assuming reset method in the new game
             agent.n_games += 1
             agent.train_long_memory()
 
-            print('Game', agent.n_games, 'Score', score)
+            if score > record:
+                record = score
+                agent.model.save()
 
-if __name__ == "__main__":
+            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+
+            plot_scores.append(score)
+            total_score += score
+            mean_score = total_score / agent.n_games
+            plot_mean_scores.append(mean_score)
+            plot(plot_scores, plot_mean_scores)
+
+
+if __name__ == '__main__':
     train()
