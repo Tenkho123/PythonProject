@@ -11,7 +11,6 @@ BATCH_SIZE = 1000
 LR = 0.001
 
 class Agent:
-
     def __init__(self):
         self.n_games = 0
         self.epsilon = 0  # randomness
@@ -29,7 +28,7 @@ class Agent:
         distances = game.ray_casting()  # Call the ray_casting method to get the distances to obstacles
         # car_position = np.array([game.car_rect.centerx / 1000, game.car_rect.centery / 800])  # Normalize car position
         # distance_to_obstacle = np.concatenate([car_position, distances])  # Combine the normalized car position with the obstacle distances
-        print("A ", len(game.ray_casting()))
+        # print("A ", len(game.ray_casting()))
         # state representation could be a vector with car position, speed, and obstacle distances
         state = [
             car_x,
@@ -91,8 +90,11 @@ def train():
     record = 0
     agent = Agent()
     game = CarRacingEnv()  # assuming this is your new game environment
+
+    game.render()
+    
     while True:
-        # get old state
+        # get old state 
         state_old = agent.get_state(game)
 
         # get move
@@ -118,7 +120,7 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            # print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
             plot_scores.append(score)
             total_score += score
