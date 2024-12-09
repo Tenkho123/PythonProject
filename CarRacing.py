@@ -157,7 +157,7 @@ class CarRacingEnv:
             reward -= 50  # Penalty for collision
         
         self.state = self.get_state()
-        return self.state, reward, self.done
+        return reward, self.done, self.score
     
     def is_on_road(self):
         """Check if the car is on the road."""
