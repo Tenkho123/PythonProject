@@ -94,6 +94,13 @@ def train():
     game.render()
     
     while True:
+        for event in game.pygame.event.get():
+            if event.type == game.pygame.QUIT:  # If close button is pressed
+                game.pygame.quit()
+            if event.type == game.pygame.KEYDOWN:  # If a key is pressed
+                if event.key == game.pygame.K_ESCAPE:  # If Escape is pressed
+                    game.pygame.quit()
+                    
         # get old state 
         state_old = agent.get_state(game)
 
@@ -120,14 +127,13 @@ def train():
                 record = score
                 agent.model.save()
 
-            # print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
             plot_scores.append(score)
             total_score += score
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
-
 
 if __name__ == '__main__':
     train()
