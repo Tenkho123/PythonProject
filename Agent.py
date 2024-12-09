@@ -17,7 +17,7 @@ class Agent:
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(17, 256, 4)  # assuming the state has 5 features and 4 possible actions
+        self.model = Linear_QNet(15, 256, 4)  # assuming the state has 5 features and 4 possible actions
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -27,15 +27,15 @@ class Agent:
         #distance_to_obstacle = game.get_distance_to_obstacle()  # assuming a distance measure
         
         distances = game.ray_casting()  # Call the ray_casting method to get the distances to obstacles
-        car_position = np.array([game.car_rect.centerx / 1000, game.car_rect.centery / 800])  # Normalize car position
-        distance_to_obstacle = np.concatenate([car_position, distances])  # Combine the normalized car position with the obstacle distances
-        
+        # car_position = np.array([game.car_rect.centerx / 1000, game.car_rect.centery / 800])  # Normalize car position
+        # distance_to_obstacle = np.concatenate([car_position, distances])  # Combine the normalized car position with the obstacle distances
+        print("A ", len(game.ray_casting()))
         # state representation could be a vector with car position, speed, and obstacle distances
         state = [
             car_x,
             car_y,
             car_speed,
-            *distance_to_obstacle,
+            *distances,
             game.is_on_road()  # whether the car is on the road (1) or off the road (0)
         ]
         
