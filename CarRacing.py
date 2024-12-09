@@ -10,7 +10,7 @@ pygame.init()
 # Game Constants
 WIDTH = 1000
 HEIGHT = 800
-FPS = 60
+FPS = 20
 CAR_SPEED = 3
 
 # Colors
@@ -39,7 +39,6 @@ class CarRacingEnv:
         self.clock = pygame.time.Clock()
         
         # RL setup
-        self.state = None
         self.done = False
         self.score = 0
         self.num_rays = 11
@@ -99,14 +98,6 @@ class CarRacingEnv:
         self.car_rect.topleft = (85, 320)
         self.done = False
         self.score = 0
-        self.state = self.get_state()
-        return self.state
-
-    def get_state(self):
-        """Compute the state representation using ray casting."""
-        distances = self.ray_casting()
-        car_position = np.array([self.car_rect.centerx / WIDTH, self.car_rect.centery / HEIGHT])
-        return np.concatenate([car_position, distances])
 
     def ray_casting(self):
         """Perform ray casting for state representation."""
@@ -119,22 +110,29 @@ class CarRacingEnv:
             for d in range(1, self.max_distance):
                 end_x = origin[0] + d * math.cos(rad_angle)
                 end_y = origin[1] + d * math.sin(rad_angle)
+                ray_end = (end_x, end_y)
                 if self.check_collision((end_x, end_y)):
                     distances.append(d / self.max_distance)  # Normalize
                     break
             else:
                 distances.append(1.0)  # Max distance normalized
+
+            pygame.draw.line(self.screen, YELLOW, origin, ray_end, 1)
+            pygame.draw.circle(self.screen, RED, (int(ray_end[0]), int(ray_end[1])), 3)
         
-        return np.array(distances)
+        return distances
 
     def check_collision(self, point):
         """Check if a point collides with walls or obstacles."""
         for wall in [*self.selected_obstacles, *self.walls]:
             if wall.collidepoint(point):
+                print(True)
                 return True
+        print(False)
         return False
 
     def step(self, action):
+        print(action)
         """Perform an action in the environment."""
         if action == 0:  # Move up
             self.car_rect.y -= CAR_SPEED
@@ -146,17 +144,16 @@ class CarRacingEnv:
             self.car_rect.x += CAR_SPEED
 
         # Compute reward
-        reward = self.compute_reward()
+        reward = -0.1
         
         # Check if episode ends
-        #if self.car_rect.colliderect(self.finish_line):
-            #self.done = True
-            #reward += 100  # Bonus for reaching the goal
-        if self.check_collision(self.car_rect.center):
-            self.done = True
-            reward -= 50  # Penalty for collision
+        # if self.car_rect.colliderect(self.finish_line):
+        #     self.done = True
+        #     reward += 100  # Bonus for reaching the goal
+        # elif self.check_collision(self.car_rect.center):
+        #     self.done = True
+        #     reward -= 50  # Penalty for collision
         
-        self.state = self.get_state()
         return reward, self.done, self.score
     
     def is_on_road(self):
@@ -169,10 +166,6 @@ class CarRacingEnv:
                 return 1  # The car is on the road
         
         return 0  # The car is not on the road
-
-    def compute_reward(self):
-        """Define a reward function."""
-        return -0.1  # Penalize time spent, encourage progress
 
     def render(self):
         """Render the environment."""
