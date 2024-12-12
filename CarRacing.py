@@ -10,8 +10,8 @@ pygame.init()
 # Game Constants
 WIDTH = 1000
 HEIGHT = 800
-FPS = 60
-CAR_SPEED = 3
+FPS = 30
+CAR_SPEED = 8
 
 # Colors
 WHITE = (255, 255, 255)
@@ -31,19 +31,28 @@ class CarRacingEnv:
         self.bg = pygame.transform.scale(self.bg, (WIDTH, HEIGHT))
         self.car = pygame.image.load("Textures/car.png")
         self.car = pygame.transform.scale(self.car, (30, 30))
-        self.car_rect = self.car.get_rect(topleft=(85, 320))
+        self.car = pygame.transform.rotate(self.car, 90)
+        self.car_rect = self.car.get_rect(topleft=(85, 420))
         self.car_speed = CAR_SPEED
+        self.rotated_rect = self.car_rect
+        self.rotated_car = self.car
         
         # Tracks, obstacles, etc.
         self.init_game_elements()
         self.clock = pygame.time.Clock()
         
         # RL setup
-        self.state = None
         self.done = False
         self.score = 0
+        self.game_round = 0
         self.num_rays = 11
-        self.max_distance = 300
+        self.max_distance = 1000
+        self.state = "up"
+        self.frame_iteration = 0
+        self.car_angle = 90
+        
+        self.pygame = pygame
+        self.font = pygame.font.SysFont('Arial', 40)
 
     def init_game_elements(self):
         # Define roads, walls, obstacles, etc.
@@ -84,7 +93,8 @@ class CarRacingEnv:
             pygame.Rect(30, 750, 320, 20),
             pygame.Rect(150, 630, 100, 20),
             pygame.Rect(30, 30, 20, 720),
-            pygame.Rect(150, 170, 20, 460)
+            pygame.Rect(150, 170, 20, 460),
+            pygame.Rect(50, 370, 100, 20)
         ]
         
         
@@ -96,20 +106,20 @@ class CarRacingEnv:
 
     def reset(self):
         """Reset the environment for a new episode."""
-        self.car_rect.topleft = (85, 320)
+        self.car_rect.topleft = (85, 420)
         self.done = False
         self.score = 0
-        self.state = self.get_state()
-        return self.state
+        self.frame_iteration = 0
+        self.car_angle = -90
+        self.game_round += 1
 
-    def get_state(self):
-        """Compute the state representation using ray casting."""
-        distances = self.ray_casting()
-        car_position = np.array([self.car_rect.centerx / WIDTH, self.car_rect.centery / HEIGHT])
-        return np.concatenate([car_position, distances])
+    def RotateCar(self, image, rect, angle):
+        rotated_image = pygame.transform.rotate(image, angle)
+        new_rect = rotated_image.get_rect(center=rect.center)
+        return rotated_image, new_rect
 
     def ray_casting(self):
-        """Perform ray casting for state representation."""
+        """Perform ray casting for state representation.
         directions = np.linspace(-60, 60, self.num_rays)  # Spread rays over an angle
         distances = []
         origin = self.car_rect.center
@@ -119,60 +129,117 @@ class CarRacingEnv:
             for d in range(1, self.max_distance):
                 end_x = origin[0] + d * math.cos(rad_angle)
                 end_y = origin[1] + d * math.sin(rad_angle)
+                ray_end = (end_x, end_y)
                 if self.check_collision((end_x, end_y)):
                     distances.append(d / self.max_distance)  # Normalize
                     break
             else:
                 distances.append(1.0)  # Max distance normalized
+
+            pygame.draw.line(self.screen, YELLOW, origin, ray_end, 1)
+            pygame.draw.circle(self.screen, RED, (int(ray_end[0]), int(ray_end[1])), 3)
         
-        return np.array(distances)
+        return distances
+        """
+        num_rays = 11
+        ray_distances = []  # Lưu khoảng cách các tia
+        origin = self.car_rect.center  # Tính điểm phát tia (giữa xe)
+        base_angle = -self.car_angle  # Góc cơ bản dựa trên góc của xe
+
+        # Góc chia đều quanh hướng xe
+        angles = [math.radians(base_angle - 90 + i * 180 / (num_rays - 1)) for i in range(num_rays)]
+        # Phát tia và kiểm tra va chạm
+        for angle in angles:
+            ray_end = origin  # Initialize ray_end
+            for dist in range(1, self.max_distance):
+                # Tính vị trí điểm cuối của tia theo góc
+                ray_x = origin[0] + dist * math.cos(angle)
+                ray_y = origin[1] + dist * math.sin(angle)
+                ray_end = (ray_x, ray_y)
+
+                # Kiểm tra va chạm với tường
+                ray_hit = any(wall.collidepoint(ray_end) for wall in self.walls)
+                if ray_hit:
+                    ray_distances.append(dist)
+                    break
+            else:
+                ray_distances.append(200)  # Không va chạm, khoảng cách tối đa
+            
+            # Vẽ tia lên màn hình
+            pygame.draw.line(self.screen, YELLOW, origin, ray_end, 1)  # Draw yellow line
+            pygame.draw.circle(self.screen, RED, (int(ray_end[0]), int(ray_end[1])), 3)  # Draw red circle
+            pygame.display.update()
+        # print(ray_distances)
+        return ray_distances
 
     def check_collision(self, point):
         """Check if a point collides with walls or obstacles."""
-        for wall in [*self.selected_obstacles, *self.walls]:
+        for wall in [*self.walls]:
             if wall.collidepoint(point):
                 return True
         return False
 
     def step(self, action):
+        self.frame_iteration += 1
+        #print(action)
         """Perform an action in the environment."""
-        if action == 0:  # Move up
-            self.car_rect.y -= CAR_SPEED
-        elif action == 1:  # Move down
-            self.car_rect.y += CAR_SPEED
-        elif action == 2:  # Move left
-            self.car_rect.x -= CAR_SPEED
-        elif action == 3:  # Move right
-            self.car_rect.x += CAR_SPEED
+        direction = pygame.math.Vector2(1, 0).rotate(-self.car_angle)
+        self.car_rect.x += int(CAR_SPEED * direction.x)
+        self.car_rect.y += int(CAR_SPEED * direction.y)
+        
+        if action[0] == 1:  # Move up
+            # self.state = "down"
+            # self.car_rect.y -= CAR_SPEED
+            # direction = pygame.math.Vector2(1, 0).rotate(-self.car_angle)
+            # self.car_rect.x += int(CAR_SPEED * direction.x)
+            # self.car_rect.y += int(CAR_SPEED * direction.y)
+            self.car_angle += 5
+        elif action[1] == 1:  # Move down
+            # self.state = "up"
+            # self.car_rect.y += CAR_SPEED
+            self.car_angle -= 5
+        #elif action[2] == 1:  # Move left
+            # self.state = "left"
+            # self.car_rect.x -= CAR_SPEED
+            #self.car_angle -= 5
+        # elif action[3] == 1:  # Move right
+        #     self.state = "right"
+        #     self.car_rect.x += CAR_SPEED
 
         # Compute reward
-        reward = self.compute_reward()
+        reward = 1
         
-        # Check if episode ends
-        #if self.car_rect.colliderect(self.finish_line):
-            #self.done = True
-            #reward += 100  # Bonus for reaching the goal
-        if self.check_collision(self.car_rect.center):
+        #Check if episode ends
+        if self.car_rect.colliderect(self.finish_line):
             self.done = True
-            reward -= 50  # Penalty for collision
+            reward += 100  # Bonus for reaching the goal
+        elif self.check_collision(self.car_rect.center): #or self.frame_iteration > 10000:
+            self.done = True
+            reward -= 10  # Penalty for collision
         
-        self.state = self.get_state()
-        return self.state, reward, self.done
+        self.render()
+        self.render_game()
+        pygame.display.flip()
+        
+        self.rotated_car, self.rotated_rect = self.RotateCar(self.car, self.car_rect, self.car_angle)
+        # print(self.car)
+        # print(self.car_rect)
+        # print(self.car_angle)
+        
+        
+        
+        self.clock.tick(FPS)
+        return reward, self.done, self.score
     
     def is_on_road(self):
         """Check if the car is on the road."""
-        car_rect = self.car_rect  # Get the car's rect
-        
+
         # Check if the car's rectangle collides with any road area
         for road in self.roads:
-            if car_rect.colliderect(road):
+            if self.car_rect.colliderect(road):
                 return 1  # The car is on the road
         
         return 0  # The car is not on the road
-
-    def compute_reward(self):
-        """Define a reward function."""
-        return -0.1  # Penalize time spent, encourage progress
 
     def render(self):
         """Render the environment."""
@@ -184,10 +251,15 @@ class CarRacingEnv:
             pygame.draw.rect(self.screen, WHITE, i)
         
         pygame.draw.rect(self.screen, YELLOW, self.finish_line)
-        self.screen.blit(self.car, self.car_rect)
-        pygame.display.flip()
-        self.clock.tick(FPS)
-
+        self.screen.blit(self.rotated_car, self.rotated_rect)
+        
+    
+    def render_game(self):
+        """Render the score on the screen."""
+        score_text = self.font.render(f"Game: {self.game_round}", True, RED)
+        text_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))  # Centered position
+        self.screen.blit(score_text, text_rect)
+        
     def close(self):
         """Close the environment."""
         pygame.quit()
@@ -208,7 +280,7 @@ if __name__ == "__main__":
                     done = True
                     
         # Random action (replace with agent action)
-        action = random.choice([0, 1, 2, 3])
+        action = random.choice([[1,0,0], [0,1,0], [0,0,1]])
         state, reward, done_step = env.step(action)
         done = done or done_step  # Combine manual quit with environment's done
         env.render()
