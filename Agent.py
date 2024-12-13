@@ -7,8 +7,8 @@ from Model import Linear_QNet, QTrainer
 # from helper import plot
 
 MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
+BATCH_SIZE = 64
+LR = 0.0005
 
 last_highest_reward = 0
 total_reward = 0
@@ -17,9 +17,9 @@ class Agent:
     def __init__(self):
         self.n_games = 0
         self.epsilon = 0  # randomness
-        self.gamma = 0.9  # discount rate
+        self.gamma = 0.99  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(5, 256, 3)  # assuming the state has 5 features and 4 possible actions
+        self.model = Linear_QNet(11, 256, 3)  # assuming the state has 5 features and 4 possible actions
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -34,14 +34,14 @@ class Agent:
         # print("A ", len(game.ray_casting()))
         # state representation could be a vector with car position, speed, and obstacle distances
         state = [
-            car_x,
-            car_y,
+            # car_x,
+            # car_y,
             # car_speed,
             *distances,
             # game.is_on_road()  # whether the car is on the road (1) or off the road (0)
         ]
         
-        return np.array(state, dtype=int)
+        return np.array(state, dtype=np.float32)
         '''
         distances = game.ray_casting()  # Ray distances
         car_position = np.array([game.car_rect.centerx / 1000, game.car_rect.centery / 800])  # Normalized car position
@@ -125,10 +125,10 @@ def train():
         state_new = agent.get_state(game)
 
         # train short memory
-        agent.train_short_memory(state_old, final_move, total_reward, state_new, done)
+        agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
         # remember
-        agent.remember(state_old, final_move, total_reward, state_new, done)
+        agent.remember(state_old, final_move, reward, state_new, done)
         
 
         if done:
