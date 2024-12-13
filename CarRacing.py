@@ -141,13 +141,13 @@ class CarRacingEnv:
         
         return distances
         """
-        num_rays = 11
+        num_rays = 3
         ray_distances = []  # Lưu khoảng cách các tia
         origin = self.car_rect.center  # Tính điểm phát tia (giữa xe)
         base_angle = -self.car_angle  # Góc cơ bản dựa trên góc của xe
 
         # Góc chia đều quanh hướng xe
-        angles = [math.radians(base_angle - 90 + i * 180 / (num_rays - 1)) for i in range(num_rays)]
+        angles = [math.radians(base_angle - 60 + i * 120 / (num_rays - 1)) for i in range(num_rays)]
         # Phát tia và kiểm tra va chạm
         for angle in angles:
             ray_end = origin  # Initialize ray_end
@@ -169,7 +169,7 @@ class CarRacingEnv:
             pygame.draw.line(self.screen, YELLOW, origin, ray_end, 1)  # Draw yellow line
             pygame.draw.circle(self.screen, RED, (int(ray_end[0]), int(ray_end[1])), 3)  # Draw red circle
             pygame.display.update()
-        # print(ray_distances)
+        print(ray_distances)
         return ray_distances
 
     def check_collision(self, point):
@@ -187,14 +187,14 @@ class CarRacingEnv:
         self.car_rect.x += int(CAR_SPEED * direction.x)
         self.car_rect.y += int(CAR_SPEED * direction.y)
         
-        if action[0] == 1:  # Move up
+        if np.array_equal(action, [1, 0, 0]):  # Move up
             # self.state = "down"
             # self.car_rect.y -= CAR_SPEED
             # direction = pygame.math.Vector2(1, 0).rotate(-self.car_angle)
             # self.car_rect.x += int(CAR_SPEED * direction.x)
             # self.car_rect.y += int(CAR_SPEED * direction.y)
             self.car_angle += 5
-        elif action[1] == 1:  # Move down
+        elif np.array_equal(action, [0, 1, 0]):  # Move down
             # self.state = "up"
             # self.car_rect.y += CAR_SPEED
             self.car_angle -= 5
@@ -212,10 +212,10 @@ class CarRacingEnv:
         #Check if episode ends
         if self.car_rect.colliderect(self.finish_line):
             self.done = True
-            reward += 100  # Bonus for reaching the goal
+            reward = 100  # Bonus for reaching the goal
         elif self.check_collision(self.car_rect.center): #or self.frame_iteration > 10000:
             self.done = True
-            reward -= 10  # Penalty for collision
+            reward = -50  # Penalty for collision
         
         self.render()
         self.render_game()

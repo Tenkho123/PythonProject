@@ -10,13 +10,16 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
+last_highest_reward = 0
+total_reward = 0
+
 class Agent:
     def __init__(self):
         self.n_games = 0
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(11, 256, 2)  # assuming the state has 5 features and 4 possible actions
+        self.model = Linear_QNet(5, 256, 3)  # assuming the state has 5 features and 4 possible actions
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -31,8 +34,8 @@ class Agent:
         # print("A ", len(game.ray_casting()))
         # state representation could be a vector with car position, speed, and obstacle distances
         state = [
-            # car_x,
-            # car_y,
+            car_x,
+            car_y,
             # car_speed,
             *distances,
             # game.is_on_road()  # whether the car is on the road (1) or off the road (0)
@@ -52,7 +55,13 @@ class Agent:
         '''
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
+        global total_reward, last_highest_reward
+        
+        if (reward > last_highest_reward):
+            self.memory.appendleft((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
+            last_highest_reward = total_reward
+        else:
+            self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
@@ -70,9 +79,9 @@ class Agent:
         # random moves: tradeoff exploration / exploitation
         self.epsilon = 80 - self.n_games
         
-        final_move = [0, 0]  # 4 possible actions (move forward, move backward, turn left, turn right)
+        final_move = [0, 0, 0]  # 4 possible actions (move forward, move backward, turn left, turn right)
         if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 1)
+            move = random.randint(0, 2)
             final_move[move] = 1
         else:
             state0 = torch.tensor(state, dtype=torch.float)
@@ -84,10 +93,12 @@ class Agent:
 
 
 def train():
+    global total_reward
+    
     plot_scores = []
     plot_mean_scores = []
     total_score = 0
-    total_reward = 0
+    
     record = float('-inf')
     agent = Agent()
     game = CarRacingEnv()  # assuming this is your new game environment
@@ -114,10 +125,10 @@ def train():
         state_new = agent.get_state(game)
 
         # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+        agent.train_short_memory(state_old, final_move, total_reward, state_new, done)
 
         # remember
-        agent.remember(state_old, final_move, reward, state_new, done)
+        agent.remember(state_old, final_move, total_reward, state_new, done)
         
 
         if done:
