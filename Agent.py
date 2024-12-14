@@ -6,9 +6,9 @@ from CarRacing import CarRacingEnv
 from Model import Linear_QNet, QTrainer
 # from helper import plot
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 64
-LR = 0.0005
+MAX_MEMORY = 500_000
+BATCH_SIZE = 128
+LR = 0.01
 
 last_highest_reward = 0
 total_reward = 0
@@ -17,9 +17,9 @@ class Agent:
     def __init__(self):
         self.n_games = 0
         self.epsilon = 0  # randomness
-        self.gamma = 0.99  # discount rate
+        self.gamma = 0.95  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(11, 256, 3)  # assuming the state has 5 features and 4 possible actions
+        self.model = Linear_QNet(14, 256, 3)  # assuming the state has 5 features and 4 possible actions
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -37,11 +37,12 @@ class Agent:
             # car_x,
             # car_y,
             # car_speed,
+            game.car_angle / 360,
             *distances,
             # game.is_on_road()  # whether the car is on the road (1) or off the road (0)
         ]
         
-        return np.array(state, dtype=np.float32)
+        return np.array(state, dtype=float)
         '''
         distances = game.ray_casting()  # Ray distances
         car_position = np.array([game.car_rect.centerx / 1000, game.car_rect.centery / 800])  # Normalized car position
@@ -57,11 +58,11 @@ class Agent:
     def remember(self, state, action, reward, next_state, done):
         global total_reward, last_highest_reward
         
-        if (reward > last_highest_reward):
-            self.memory.appendleft((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
-            last_highest_reward = total_reward
-        else:
-            self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
+        # if (reward > last_highest_reward):
+        #     self.memory.appendleft((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
+        #     last_highest_reward = total_reward
+        # else:
+        self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
@@ -77,7 +78,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
+        self.epsilon = max(10, 80 - self.n_games * 0.05)
         
         final_move = [0, 0, 0]  # 4 possible actions (move forward, move backward, turn left, turn right)
         if random.randint(0, 200) < self.epsilon:
@@ -137,7 +138,7 @@ def train():
             agent.n_games += 1
             agent.train_long_memory()
 
-            if total_reward > record:
+            if total_reward > record + 10:
                 record = total_reward
                 print(record)
                 agent.model.save()

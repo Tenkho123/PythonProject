@@ -63,6 +63,8 @@ class QTrainer:
         target = pred.clone()
         # print(target)
         # print(done)
+        
+
         for idx in range(len(done)):
             Q_new = reward[idx]
             if not done[idx]:
@@ -75,6 +77,7 @@ class QTrainer:
         # pred.clone()
         # preds[argmax(action)] = Q_new
         self.optimizer.zero_grad()
+
         loss = self.criterion(target, pred)
         loss.backward()
 

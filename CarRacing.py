@@ -45,7 +45,7 @@ class CarRacingEnv:
         self.done = False
         self.score = 0
         self.game_round = 0
-        self.max_distance = 300
+        self.max_distance = 800
         self.state = "up"
         self.frame_iteration = 0
         self.car_angle = -90
@@ -140,7 +140,7 @@ class CarRacingEnv:
         
         return distances
         """
-        num_rays = 11
+        num_rays = 13
         ray_distances = []  # Lưu khoảng cách các tia
         origin = self.car_rect.center  # Tính điểm phát tia (giữa xe)
         base_angle = -self.car_angle  # Góc cơ bản dựa trên góc của xe
@@ -168,6 +168,7 @@ class CarRacingEnv:
             pygame.draw.line(self.screen, YELLOW, origin, ray_end, 1)  # Draw yellow line
             pygame.draw.circle(self.screen, RED, (int(ray_end[0]), int(ray_end[1])), 3)  # Draw red circle
             pygame.display.update()
+            
         # print(ray_distances)
         return ray_distances
 
@@ -190,29 +191,29 @@ class CarRacingEnv:
             # direction = pygame.math.Vector2(1, 0).rotate(-self.car_angle)
             # self.car_rect.x += int(CAR_SPEED * direction.x)
             # self.car_rect.y += int(CAR_SPEED * direction.y)
-            self.car_angle += 0
+            self.car_angle += 5
         elif np.array_equal(action, [0, 1, 0]):  # Move down
             # self.state = "up"
             # self.car_rect.y += CAR_SPEED
-            self.car_angle += 5
-        else:  # Move left
             self.car_angle -= 5
+        else:  # Move left
+            self.car_angle += 0
         # elif action[3] == 1:  # Move right
         #     self.state = "right"
         #     self.car_rect.x += CAR_SPEED
 
         # Compute reward
-        reward = 0.1
+        reward = 0
         
         #Check if episode ends
         if self.car_rect.colliderect(self.finish_line):
             self.done = True
-            reward = 10000  # Bonus for reaching the goal
+            reward = 1000  # Bonus for reaching the goal
         elif self.check_collision(self.car_rect.center): #or self.frame_iteration > 10000:
             self.done = True
-            reward = -1000  # Penalty for collision
+            reward = -100  # Penalty for collision
         else:
-            reward += 0.1 * self.frame_iteration
+            reward += 0.0001 * self.frame_iteration
         
         self.rotated_car, self.rotated_rect = self.RotateCar(self.car, self.car_rect, self.car_angle)
         # print(self.car)
@@ -220,12 +221,13 @@ class CarRacingEnv:
         # print(self.car_angle)
         
         direction = pygame.math.Vector2(1, 0).rotate(-self.car_angle)
-        self.car_rect.x += int(CAR_SPEED * direction.x)
-        self.car_rect.y += int(CAR_SPEED * direction.y)
+        self.car_rect.x += float(CAR_SPEED * direction.x)
+        self.car_rect.y += float(CAR_SPEED * direction.y)
         
         self.render()
         self.render_game()
         pygame.display.flip()
+        
         
         self.clock.tick(FPS)
         return reward, self.done, self.score
