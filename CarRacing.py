@@ -110,7 +110,6 @@ class CarRacingEnv:
         self.score = 0
         self.frame_iteration = 0
         self.car_angle = -90
-        self.game_round += 1
 
     def RotateCar(self, image, rect, angle):
         rotated_image = pygame.transform.rotate(image, angle)
@@ -118,28 +117,6 @@ class CarRacingEnv:
         return rotated_image, new_rect
 
     def ray_casting(self):
-        """Perform ray casting for state representation.
-        directions = np.linspace(-60, 60, self.num_rays)  # Spread rays over an angle
-        distances = []
-        origin = self.car_rect.center
-        
-        for angle in directions:
-            rad_angle = math.radians(angle)
-            for d in range(1, self.max_distance):
-                end_x = origin[0] + d * math.cos(rad_angle)
-                end_y = origin[1] + d * math.sin(rad_angle)
-                ray_end = (end_x, end_y)
-                if self.check_collision((end_x, end_y)):
-                    distances.append(d / self.max_distance)  # Normalize
-                    break
-            else:
-                distances.append(1.0)  # Max distance normalized
-
-            pygame.draw.line(self.screen, YELLOW, origin, ray_end, 1)
-            pygame.draw.circle(self.screen, RED, (int(ray_end[0]), int(ray_end[1])), 3)
-        
-        return distances
-        """
         num_rays = 13
         ray_distances = []  # Lưu khoảng cách các tia
         origin = self.car_rect.center  # Tính điểm phát tia (giữa xe)
@@ -185,23 +162,13 @@ class CarRacingEnv:
         """Perform an action in the environment."""
         # print(f"Action received: {action}")
         
-        if np.array_equal(action, [1, 0, 0]):  # Move up
-            # self.state = "down"
-            # self.car_rect.y -= CAR_SPEED
-            # direction = pygame.math.Vector2(1, 0).rotate(-self.car_angle)
-            # self.car_rect.x += int(CAR_SPEED * direction.x)
-            # self.car_rect.y += int(CAR_SPEED * direction.y)
+        if np.array_equal(action, [1, 0, 0]):
             self.car_angle += 5
-        elif np.array_equal(action, [0, 1, 0]):  # Move down
-            # self.state = "up"
-            # self.car_rect.y += CAR_SPEED
+        elif np.array_equal(action, [0, 1, 0]):
             self.car_angle -= 5
-        else:  # Move left
+        else:
             self.car_angle += 0
-        # elif action[3] == 1:  # Move right
-        #     self.state = "right"
-        #     self.car_rect.x += CAR_SPEED
-
+            
         # Compute reward
         reward = 0
         
@@ -262,7 +229,6 @@ class CarRacingEnv:
         self.screen.blit(score_text, text_rect)
         
     def close(self):
-        """Close the environment."""
         pygame.quit()
         sys.exit()
 
@@ -274,7 +240,7 @@ if __name__ == "__main__":
 
     while not done:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:  # If close button is pressed
+            if event.type == pygame.QUIT:
                 done = True
             if event.type == pygame.KEYDOWN:  # If a key is pressed
                 if event.key == pygame.K_ESCAPE:  # If Escape is pressed
