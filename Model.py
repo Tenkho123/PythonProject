@@ -16,22 +16,25 @@ class Linear_QNet(nn.Module):
         x = self.linear2(x)
         return x
 
-    def save(self, file_name='model.pth'):
+    def save(self, reward_number, file_name='model.pth'):
         # print(os.path)
-        model_folder_path = './model'
+        model_folder_path = './model' + str(reward_number)
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
 
         file_name = os.path.join(model_folder_path, file_name)
         torch.save(self.state_dict(), file_name)
     
-    def load(self, file_name='model.pth'):
-        model_folder_path = './model'
-        if not os.path.exists(model_folder_path):
-            os.makedirs(model_folder_path)
+    def load(self, game_number, file_name='model.pth'):
+        model_folder_path = './model' + str(game_number)
+        file_path = os.path.join(model_folder_path, file_name)
 
-        file_name = os.path.join(model_folder_path, file_name)
-        torch.load(self.state_dict(), file_name)
+        if os.path.exists(file_path):
+            self.load_state_dict(torch.load(file_path, weights_only=True))
+            self.eval()  # Set the model to evaluation mode
+            print("Model loaded successfully.")
+        else:
+            print(f"No model found at {file_path}")
 
 
 class QTrainer:
