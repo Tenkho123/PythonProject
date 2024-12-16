@@ -93,7 +93,7 @@ class Agent:
         return final_move
 
 
-def train():
+def train(load_model=False):
     global total_reward
     
     plot_scores = []
@@ -102,16 +102,27 @@ def train():
     
     record = float('-inf')
     agent = Agent()
+    if load_model:
+        agent.n_games = 3100
+        agent.model.load(agent.n_games)
+        
+    else:
+        print("Training a new model from scratch.")
+        
     game = CarRacingEnv()  # assuming this is your new game environment
-
+    
+    game.game_round = agent.n_games
+    
     game.render()
     
     while True:
         for event in game.pygame.event.get():
             if event.type == game.pygame.QUIT:  # If close button is pressed
+                agent.model.save(agent.n_games)    
                 game.pygame.quit()
             if event.type == game.pygame.KEYDOWN:  # If a key is pressed
                 if event.key == game.pygame.K_ESCAPE:  # If Escape is pressed
+                    agent.model.save(agent.n_games)    
                     game.pygame.quit()
                     
         # get old state 
@@ -136,12 +147,15 @@ def train():
             # train long memory, plot result
             game.reset()  # assuming reset method in the new game
             agent.n_games += 1
+            
+            game.game_round = agent.n_games
+            
             agent.train_long_memory()
 
-            if total_reward > record + 10:
+            if total_reward > record:
                 record = total_reward
                 print(record)
-                agent.model.save()
+                
                 # agent.model.load_state_dict(torch.load('./model/model.pth'))  # Reload the saved model
                 # agent.model.eval()  # Ensure it's in evaluation mode
             
@@ -155,4 +169,4 @@ def train():
             # plot(plot_scores, plot_mean_scores)
 
 if __name__ == '__main__':
-    train()
+    train(True)
