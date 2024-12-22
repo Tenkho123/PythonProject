@@ -6,4 +6,4 @@ Stage two: making a car game using pytorch and pygame for more complexity and pr
 "CarRacingHuman" is original game that take input from keyboard, no AI implemented.
 
 Car Agent at game 3100:
-[![Watch the video](https://github.com/Tenkho123/PythonProject/blob/main/Video/AICar3100.mp4)
+https://github.com/Tenkho123/PythonProject/blob/main/Video/AICar3100.mp4
