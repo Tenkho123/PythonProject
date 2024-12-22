@@ -1,0 +1,7 @@
+UPDATE
+Chỉnh sửa file CarRacing.py
+    Set tốc độ: 19
+    Góc quay: 20
+    Bổ sung biến đếm số round win
+Cập nhật model
+Bổ sung map train trong môi trường mới: forder myenv

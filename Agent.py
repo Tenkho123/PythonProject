@@ -16,6 +16,7 @@ total_reward = 0
 class Agent:
     def __init__(self):
         self.n_games = 0
+        self.w_game = 0
         self.epsilon = 0  # randomness
         self.gamma = 0.95  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
@@ -103,7 +104,8 @@ def train(load_model=False):
     record = float('-inf')
     agent = Agent()
     if load_model:
-        agent.n_games = 3100
+        agent.n_games =16915
+        agent.w_game = 4000
         agent.model.load(agent.n_games)
         
     else:
@@ -112,6 +114,7 @@ def train(load_model=False):
     game = CarRacingEnv()  # assuming this is your new game environment
     
     game.game_round = agent.n_games
+    game.game_win = agent.w_game
     
     game.render()
     
@@ -147,8 +150,11 @@ def train(load_model=False):
             # train long memory, plot result
             game.reset()  # assuming reset method in the new game
             agent.n_games += 1
+            agent.w_game = game.game_win
             
             game.game_round = agent.n_games
+            
+
             
             agent.train_long_memory()
 

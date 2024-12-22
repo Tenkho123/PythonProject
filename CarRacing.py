@@ -1,8 +1,8 @@
-import pygame
+import pygame # type: ignore
 import sys
 import random
 import math
-import numpy as np
+import numpy as np # type: ignore
 
 # Initialize Pygame
 pygame.init()
@@ -11,13 +11,14 @@ pygame.init()
 WIDTH = 1000
 HEIGHT = 800
 FPS = 30
-CAR_SPEED = 8
+CAR_SPEED = 19
 
 # Colors
 WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
 # Create the Environment Class
 class CarRacingEnv:
@@ -49,9 +50,10 @@ class CarRacingEnv:
         self.state = "up"
         self.frame_iteration = 0
         self.car_angle = -90
+        self.game_win = 0
         
         self.pygame = pygame
-        self.font = pygame.font.SysFont('Arial', 40)
+        self.font = pygame.font.SysFont('Arial', 30)
 
     def init_game_elements(self):
         # Define roads, walls, obstacles, etc.
@@ -163,9 +165,9 @@ class CarRacingEnv:
         # print(f"Action received: {action}")
         
         if np.array_equal(action, [1, 0, 0]):
-            self.car_angle += 5
+            self.car_angle += 20
         elif np.array_equal(action, [0, 1, 0]):
-            self.car_angle -= 5
+            self.car_angle -= 20
         else:
             self.car_angle += 0
             
@@ -176,6 +178,7 @@ class CarRacingEnv:
         if self.car_rect.colliderect(self.finish_line):
             self.done = True
             reward = 1000  # Bonus for reaching the goal
+            self.game_win+=1
         elif self.check_collision(self.car_rect.center): #or self.frame_iteration > 10000:
             self.done = True
             reward = -100  # Penalty for collision
@@ -224,9 +227,12 @@ class CarRacingEnv:
     
     def render_game(self):
         """Render the score on the screen."""
-        score_text = self.font.render(f"Game: {self.game_round}", True, RED)
-        text_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))  # Centered position
-        self.screen.blit(score_text, text_rect)
+        score_text1 = self.font.render(f"Game_Win: {self.game_win}", True, GREEN)
+        score_text2 = self.font.render(f"Game_Round: {self.game_round}", True, RED)
+        text_rect1 = score_text1.get_rect(center=(WIDTH -150, 50))  # Centered position
+        text_rect2 = score_text2.get_rect(center=(WIDTH -150, 90))  # Centered position
+        self.screen.blit(score_text1, text_rect1)
+        self.screen.blit(score_text2, text_rect2)
         
     def close(self):
         pygame.quit()
