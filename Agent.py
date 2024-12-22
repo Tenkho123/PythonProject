@@ -103,7 +103,7 @@ def train(load_model=False):
     record = float('-inf')
     agent = Agent()
     if load_model:
-        agent.n_games = 3100
+        agent.n_games = 16915
         agent.model.load(agent.n_games)
         
     else:
@@ -132,7 +132,7 @@ def train(load_model=False):
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.step(final_move)  # assuming step method in the new game
+        reward, done, score = game.step(final_move, agent.n_games)  # assuming step method in the new game
         total_reward += reward
         state_new = agent.get_state(game)
 
@@ -154,7 +154,7 @@ def train(load_model=False):
 
             if total_reward > record:
                 record = total_reward
-                print(record)
+                # print(record)
                 
                 # agent.model.load_state_dict(torch.load('./model/model.pth'))  # Reload the saved model
                 # agent.model.eval()  # Ensure it's in evaluation mode
