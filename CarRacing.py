@@ -52,30 +52,26 @@ class CarRacingEnv:
         
         self.pygame = pygame
         self.font = pygame.font.SysFont('Arial', 40)
-    def load_map(self, map_file):
-        walls = []
-        roads = []
-        with open(map_file, 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                if 'pygame.Rect' in line:
-                    rect = eval(line.split('=')[1].strip())
-                    if 'wall' in line:
-                        walls.append(rect)
-                    elif 'road' in line:
-                        roads.append(rect)
-        return walls, roads
+    # def load_map(self, map_file):
+    #     with open(map_file, 'r') as file:
+    #         data = file.read()
+    #         walls_data = data.split('walls = ')[1].split(']')[0] + ']'
+    #         roads_data = data.split('roads = ')[1].split(']')[0] + ']'
+    #         walls = eval(walls_data)
+    #         roads = eval(roads_data)
+    #         walls = [pygame.Rect(*rect) for rect in walls]
+    #         roads = [pygame.Rect(*rect) for rect in roads]
+    #     return walls, roads
 
-    def init_game_elements(self):
-        # Load map from file
-        self.walls, self.roads = self.load_map('Map/map1.txt')
+    # def init_game_elements(self):
+    #     # Load map from file
+    #     self.walls, self.roads = self.load_map('Map/map2.txt')
         
-        self.finish_line = pygame.Rect(50, 350, 100, 10)
-        self.selected_obstacles = [
-            pygame.Rect(random.randint(200, 800), random.randint(200, 600), 30, 30)
-            for _ in range(10)
-        ]
-
+    #     self.finish_line = pygame.Rect(50, 350, 100, 10)
+    #     self.selected_obstacles = [
+    #         pygame.Rect(random.randint(200, 800), random.randint(200, 600), 30, 30)
+    #         for _ in range(10)
+    #     ]
     # def init_game_elements(self):
         # Define roads, walls, obstacles, etc.
         # self.roads = [
