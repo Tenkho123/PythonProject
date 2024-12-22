@@ -52,75 +52,56 @@ class CarRacingEnv:
         
         self.pygame = pygame
         self.font = pygame.font.SysFont('Arial', 40)
-    # def load_map(self, map_file):
-    #     with open(map_file, 'r') as file:
-    #         data = file.read()
-    #         walls_data = data.split('walls = ')[1].split(']')[0] + ']'
-    #         roads_data = data.split('roads = ')[1].split(']')[0] + ']'
-    #         walls = eval(walls_data)
-    #         roads = eval(roads_data)
-    #         walls = [pygame.Rect(*rect) for rect in walls]
-    #         roads = [pygame.Rect(*rect) for rect in roads]
-    #     return walls, roads
 
-    # def init_game_elements(self):
-    #     # Load map from file
-    #     self.walls, self.roads = self.load_map('Map/map2.txt')
-        
-    #     self.finish_line = pygame.Rect(50, 350, 100, 10)
-    #     self.selected_obstacles = [
-    #         pygame.Rect(random.randint(200, 800), random.randint(200, 600), 30, 30)
-    #         for _ in range(10)
-    #     ]
-    # def init_game_elements(self):
+    def init_game_elements(self):
         # Define roads, walls, obstacles, etc.
-        # self.roads = [
-        #     pygame.Rect(50, 50, WIDTH - 350, 100),
-        #     pygame.Rect(550, 150, 300, 100),
-        #     pygame.Rect(750, 250, 100, 200),
-        #     pygame.Rect(850, 350, 100, 400),
-        #     pygame.Rect(550, 650, 400, 100),
-        #     pygame.Rect(550, 350, 100, 300),
-        #     pygame.Rect(250, 350, 300, 100),
-        #     pygame.Rect(250, 450, 100, 300),
-        #     pygame.Rect(150, 650, 100, 100),
-        #     pygame.Rect(50, 150, 100, 600)
-        # ] 
+        self.roads = [
+            pygame.Rect(50, 50, WIDTH - 350, 100),
+            pygame.Rect(550, 150, 300, 100),
+            pygame.Rect(750, 250, 100, 200),
+            pygame.Rect(850, 350, 100, 400),
+            pygame.Rect(550, 650, 400, 100),
+            pygame.Rect(550, 350, 100, 300),
+            pygame.Rect(250, 350, 300, 100),
+            pygame.Rect(250, 450, 100, 300),
+            pygame.Rect(150, 650, 100, 100),
+            pygame.Rect(50, 150, 100, 600)
+        ] 
         
-        # self.walls = [
-        #     pygame.Rect(50, 30, 670, 20),
-        #     pygame.Rect(150, 150, 400, 20),
-        #     pygame.Rect(700, 50, 20, 100),
-        #     pygame.Rect(550, 250, 180, 20),
-        #     pygame.Rect(530, 170, 20, 100),
-        #     pygame.Rect(720, 130, 150, 20),
-        #     pygame.Rect(730, 250, 20, 200),
-        #     pygame.Rect(730, 450, 100, 20),
-        #     pygame.Rect(850, 150, 20, 200),
-        #     pygame.Rect(830, 450, 20, 180),
-        #     pygame.Rect(950, 350, 20, 420),
-        #     pygame.Rect(870, 330, 100, 20),
-        #     pygame.Rect(550, 750, 400, 20),
-        #     pygame.Rect(670, 630, 180, 20),
-        #     pygame.Rect(650, 330, 20, 320),
-        #     pygame.Rect(530, 470, 20, 300),
-        #     pygame.Rect(230, 330, 420, 20),
-        #     pygame.Rect(350, 450, 200, 20),
-        #     pygame.Rect(350, 470, 20, 300),
-        #     pygame.Rect(230, 350, 20, 280),
-        #     pygame.Rect(30, 750, 320, 20),
-        #     pygame.Rect(150, 630, 100, 20),
-        #     pygame.Rect(30, 30, 20, 720),
-        #     pygame.Rect(150, 170, 20, 460),
-        #     # pygame.Rect(50, 370, 100, 20)
-        # ]
+        self.walls = [
+            pygame.Rect(50, 30, 670, 20),
+            pygame.Rect(150, 150, 400, 20),
+            pygame.Rect(700, 50, 20, 100),
+            pygame.Rect(550, 250, 180, 20),
+            pygame.Rect(530, 170, 20, 100),
+            pygame.Rect(720, 130, 150, 20),
+            pygame.Rect(730, 250, 20, 200),
+            pygame.Rect(730, 450, 100, 20),
+            pygame.Rect(850, 150, 20, 200),
+            pygame.Rect(830, 450, 20, 180),
+            pygame.Rect(950, 350, 20, 420),
+            pygame.Rect(870, 330, 100, 20),
+            pygame.Rect(550, 750, 400, 20),
+            pygame.Rect(670, 630, 180, 20),
+            pygame.Rect(650, 330, 20, 320),
+            pygame.Rect(530, 470, 20, 300),
+            pygame.Rect(230, 330, 420, 20),
+            pygame.Rect(350, 450, 200, 20),
+            pygame.Rect(350, 470, 20, 300),
+            pygame.Rect(230, 350, 20, 280),
+            pygame.Rect(30, 750, 320, 20),
+            pygame.Rect(150, 630, 100, 20),
+            pygame.Rect(30, 30, 20, 720),
+            pygame.Rect(150, 170, 20, 460),
+            # pygame.Rect(50, 370, 100, 20)
+        ]
         
         
-        # self.finish_line = pygame.Rect(50, 350, 100, 10)
-        # self.selected_obstacles = [
-        #     pygame.Rect(random.randint(200, 800), random.randint(200, 600), 30, 30)
-        #     for _ in range(10)
-        # ]
+        self.finish_line = pygame.Rect(50, 350, 100, 10)
+        self.selected_obstacles = [
+            pygame.Rect(random.randint(200, 800), random.randint(200, 600), 30, 30)
+            for _ in range(10)
+        ]
 
     def reset(self):
         """Reset the environment for a new episode."""
@@ -175,7 +156,7 @@ class CarRacingEnv:
                 return True
         return False
 
-    def step(self, action):
+    def step(self, action, n_game):
         self.frame_iteration += 1
         #print(action)
         """Perform an action in the environment."""
@@ -194,6 +175,7 @@ class CarRacingEnv:
         #Check if episode ends
         if self.car_rect.colliderect(self.finish_line):
             self.done = True
+            print("Finish-", n_game)
             reward = 1000  # Bonus for reaching the goal
         elif self.check_collision(self.car_rect.center): #or self.frame_iteration > 10000:
             self.done = True
